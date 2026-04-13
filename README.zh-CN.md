@@ -2,91 +2,76 @@
 
 [English README](./README.md)
 
-`headline_skill` 是一套可复用的标题工作流。它不是帮你临时起几个标题的 prompt，而是把起标题这件事拆成固定流程、可替换配置和可插拔评分器，方便你自己用，也方便别人按自己的场景接入。
+一套给 Codex 用的标题工作流：负责生成、评审、筛选标题，也负责把平台差异、受众差异和风格偏好拆出来，做成可替换的 profile 和 scorer。
 
-## 这个项目想解决什么
+## 这个仓库是干什么的
 
-很多 AI 写出来的标题不差，但也不想点。问题通常不在语法，而在表达方式太老实。它太快把中心思想说完了，于是标题变成了摘要、总结，或者教程目录。
+很多 AI 写出来的标题不差，但也不想点。问题通常不在语法，而在表达太老实，太快把中心思想讲完，结果标题就变成了摘要、总结或者教程目录。
 
-这个项目的出发点很简单：好标题往往不是先把重点讲清，而是先把情绪钩子、冲突、代价、反差或者场景放出来。真正的中心思想，可以藏一点，留给读者在点开后自己补全。
+这个仓库的目标不是多给几个标题，而是把起标题这件事做成一套能复用的流程。真正稳定的部分放在流程里，真正会因人而异的部分放在 profile 里，能脚本化的判断放进 scorer。
 
-## 它是怎么组织的
+### 核心特性
 
-整个仓库分三层。
+- 可替换的 Profile
+  - 平台规则、用户画像、语气限制、禁词、样本和评分权重都放在 profile。
+- 结构化评审
+  - 候选标题不是随便丢一串出来，而是经过过滤、评分和排序。
+- 可插拔的 Scorer
+  - 仓库内置节奏评分，也支持接自己的脚本。
+- 流程可迁移
+  - 同一套 workflow 可以服务小红书、B 站，也可以继续扩。
+- 可回归测试
+  - golden set 和单元测试让你改规则时不靠感觉。
 
-第一层是固定流程。负责读 brief、拆内容、挑路线、出候选、做过滤、做评审、给出首选和备选。这一层尽量不跟着个人偏好乱改。
+## 安装方式
 
-第二层是 profile。这里放平台规则、受众画像、语气约束、禁词、好坏样本和评分权重。换句话说，真正和你业务绑定的东西，都放在这一层。
+### 当作 Skill 使用
 
-第三层是 scorer。仓库里已经带了硬过滤和节奏评分。你如果有自己的脚本，也可以按统一返回格式接进来，不用重写整条流程。
-
-## 为什么它不是一个大 prompt
-
-很多标题系统喜欢把一长串要求直接塞进 prompt。这样短期看方便，长期几乎一定会出三个问题。
-
-- 约束一多，模型就开始求稳，越写越像总结
-- 换个平台、换业务、换受众，就得重新改 prompt
-- 团队里的经验很难沉淀，最后只能靠人记住
-
-这个项目反过来处理：
-
-- 方法写进流程
-- 审美写进 profile
-- 规则写进脚本
-
-这样别人在接入时，主要改的是自己的风格和场景，不是把底层逻辑重做一遍。
-
-## 仓库里已经有什么
-
-- `SKILL.md`
-  - Codex Skill 主入口，定义什么时候触发、按什么流程工作
-- `profiles/`
-  - 现在带了两个示例
-  - `default_xiaohongshu.yaml`
-  - `example_bilibili.yaml`
-- `references/`
-  - 放通用方法、profile schema 和 review rubric
-- `scripts/`
-  - `hard_filter.py`
-  - `rhythm_scorer.py`
-  - `evaluate_candidates.py`
-  - `validate_skill.py`
-- `tests/`
-  - 33 条 golden set
-  - 一组单元测试
-- `.github/workflows/headline-skill-ci.yml`
-  - GitHub Actions 自动校验
-
-## 适合什么人
-
-如果你符合下面任一类，这个仓库基本就有用：
-
-- 你在做小红书、B 站、公众号、视频号、课程页之类的内容标题
-- 你想把团队里的标题经验沉淀下来，而不是散落在聊天记录和 prompt 里
-- 你想开源一套标题方法，但不想把自己的审美写死
-- 你想让别人只换 profile 就能用上同一套流程
-
-## 怎么开始用
-
-先装依赖：
+如果你想直接把它接进 Codex：
 
 ```bash
+git clone https://github.com/starfishwrx/headline-skill.git ~/.codex/skills/headline-skill
+```
+
+### 当作独立仓库使用
+
+如果你只是想跑脚本和改配置：
+
+```bash
+git clone https://github.com/starfishwrx/headline-skill.git
+cd headline-skill
 python -m pip install -r requirements.txt
 ```
 
-然后先检查仓库结构有没有问题：
+## 怎么用
 
-```bash
-python scripts/validate_skill.py .
+### 评估一批候选标题
+
+先准备一个 `candidates.json`：
+
+```json
+{
+  "candidates": [
+    {
+      "title": "真正能打的标题，第一眼往往不讲重点",
+      "hook_family": "tension-and-cost",
+      "concealment_pattern": "hide-conclusion-show-tension",
+      "soft_scores": {
+        "emotional_tension": 88,
+        "concealment": 90,
+        "specificity": 72,
+        "platform_fit": 92,
+        "credibility": 78,
+        "curiosity_gap": 82
+      },
+      "selection_reason": "",
+      "risk_notes": []
+    }
+  ]
+}
 ```
 
-再跑测试，确认本地环境没问题：
-
-```bash
-python -m unittest discover -s tests -p "test_*.py"
-```
-
-如果你已经有一批候选标题，可以直接走评估链路：
+然后跑完整评估链路：
 
 ```bash
 python scripts/hard_filter.py --profile profiles/default_xiaohongshu.yaml --input candidates.json
@@ -94,32 +79,80 @@ python scripts/rhythm_scorer.py --profile profiles/default_xiaohongshu.yaml --in
 python scripts/evaluate_candidates.py --profile profiles/default_xiaohongshu.yaml --input candidates.json
 ```
 
-## 如果你要接自己的版本
+### 自定义一个 Profile
 
-最省事的接入方式是：
+复制 `profiles/` 下面任意一个文件，然后改这些部分：
 
-1. 复制一个 profile
-2. 改成自己的平台规则和受众画像
-3. 填自己的好标题样本和坏标题样本
-4. 如果你有额外脚本，就按 scorer contract 接进来
-5. 保留现有 workflow、测试和 CI
+- `platform_rules`
+- `audience_model`
+- `tone_rules`
+- `hook_families`
+- `bad_patterns`
+- `banned_words`
+- `score_weights`
+- `golden_examples`
+- `negative_examples`
 
-这样你改的是业务层，不是底层流程。
+具体字段约定在 `references/profile_schema.md`。
 
-## 输出结果长什么样
+### 接自己的 Scorer
 
-这个项目默认输出的不是一句标题，而是一组结构化结果，方便后续继续做 A/B 测试和人工终审。
+你自己的 scorer 只要返回下面这些字段，就能接进现有流程：
 
-- `winner`
-- `alternatives`
-- `rejected`
-- `hook_family`
-- `concealment_pattern`
-- `hard_filter_result`
-- `soft_scores`
-- `selection_reason`
-- `risk_notes`
+- `title`
+- `score_name`
+- `numeric_score`
+- `pass_fail`
+- `reason`
 
-## 一句话说完
+分数保持在 `0-100` 区间，方便和内置评分器合并。
 
-`headline_skill` 不是一个起标题 prompt，而是一套能迁移、能复用、能让别人接入自己风格的标题工作流。
+## 内置的两个 Profile
+
+### 小红书
+
+- `profiles/default_xiaohongshu.yaml`
+- 更强调情绪钩子、平台语感和反摘要倾向
+
+### B 站
+
+- `profiles/example_bilibili.yaml`
+- 更强调讨论感、判断力和信息密度
+
+## 架构怎么设计的
+
+这个仓库走的是 progressive disclosure。主入口 `SKILL.md` 尽量短，只负责流程和调用规则。其他文件按需读取，不把所有说明一次性塞进上下文。
+
+| 文件 | 作用 | 什么时候读 |
+| --- | --- | --- |
+| `SKILL.md` | 主流程和调用规则 | 每次调用都读 |
+| `references/framework.md` | 通用标题方法 | 做策略和生成时 |
+| `references/profile_schema.md` | profile 约定 | 改配置时 |
+| `references/review_rubric.md` | 软评审标准 | 做筛选时 |
+| `scripts/hard_filter.py` | 硬过滤 | 评估阶段 |
+| `scripts/rhythm_scorer.py` | 节奏评分 | 评估阶段 |
+| `scripts/evaluate_candidates.py` | 合并结果并排序 | 评估阶段 |
+| `tests/golden_set.jsonl` | 回归样本集 | 测试阶段 |
+
+## 这个项目背后的几个判断
+
+1. 好标题通常不是先解释，而是先制造拉力。
+2. 审美应该可配置，流程应该可复用。
+3. 能写进脚本的规则，就不要全塞进 prompt。
+4. 一个不能回归测试的标题系统，最后大概率会慢慢滑回平庸。
+
+## 校验和测试
+
+先跑结构校验：
+
+```bash
+python scripts/validate_skill.py .
+```
+
+再跑测试：
+
+```bash
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+仓库里也自带了 `.github/workflows/headline-skill-ci.yml`，同样这两类检查会在 GitHub Actions 里自动执行。

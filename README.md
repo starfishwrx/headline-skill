@@ -2,65 +2,52 @@
 
 [中文版说明](./README.zh-CN.md)
 
-Reusable title workflow for Codex. It turns headline generation into a portable system instead of a one-off prompt.
+A reusable Codex skill for generating, reviewing, and selecting strong headlines with configurable profiles and pluggable scorers.
 
-## What It Solves
+## What This Does
 
-Most AI-written titles fail for the same reason: they summarize too early. This skill uses a fixed workflow that separates:
+Headline Skill turns headline writing into a portable workflow instead of a fragile one-off prompt. It is built for teams that want to reuse the same process across different platforms, audiences, and content types without locking everyone into one writing style.
 
-- universal method
-- local taste
-- deterministic checks
+The core idea is simple: good headlines usually reveal tension before they reveal the thesis. This skill helps you keep that logic stable while making the taste layer replaceable.
 
-The result is a skill package other teams can fork and adapt without rewriting the process.
+### Key Features
 
-## Core Design
+- Configurable Profiles
+  - Platform rules, audience model, tone constraints, banned words, and example packs all live in profiles.
+- Structured Review
+  - Candidates are filtered, scored, and ranked instead of being dumped as a loose list.
+- Pluggable Scorers
+  - Rhythm scoring is bundled. Custom scorers can be added through the same contract.
+- Portable Workflow
+  - The same orchestration works for Xiaohongshu, Bilibili, and any future profile you add.
+- Regression-Friendly
+  - Golden set cases and tests make it possible to improve the system without guessing.
 
-The package is split into three layers:
+## Installation
 
-1. Universal workflow
-   - brief normalization
-   - hook route selection
-   - candidate generation
-   - hard filtering
-   - soft review
-   - winner selection
-2. Replaceable profiles
-   - platform rules
-   - audience model
-   - tone rules
-   - banned words
-   - hook families
-   - scoring weights
-3. Pluggable scorers
-   - rhythm scoring is bundled
-   - custom scorers can be added if they follow the scorer contract
+### Use as a Skill
 
-## Directory Layout
+Clone the repo into your Codex skills directory:
 
-```text
-headline_skill/
-├── SKILL.md
-├── README.md
-├── agents/openai.yaml
-├── references/
-├── profiles/
-├── scripts/
-└── tests/
+```bash
+git clone https://github.com/starfishwrx/headline-skill.git ~/.codex/skills/headline-skill
 ```
 
-## Included Profiles
+### Use as a Standalone Repo
 
-- `profiles/default_xiaohongshu.yaml`
-- `profiles/example_bilibili.yaml`
+Clone the repo anywhere and install the only Python dependency:
 
-They exist to prove the workflow is portable. The skill is not tied to one platform.
+```bash
+git clone https://github.com/starfishwrx/headline-skill.git
+cd headline-skill
+python -m pip install -r requirements.txt
+```
 
-## Quick Start
+## Usage
 
-### 1. Prepare a candidate file
+### Generate and Review Headlines
 
-The scripts expect JSON shaped like:
+Prepare a candidate JSON file:
 
 ```json
 {
@@ -84,35 +71,17 @@ The scripts expect JSON shaped like:
 }
 ```
 
-### 2. Run the hard filter
+Run the evaluation chain:
 
 ```bash
-python scripts/hard_filter.py \
-  --profile profiles/default_xiaohongshu.yaml \
-  --input candidates.json
+python scripts/hard_filter.py --profile profiles/default_xiaohongshu.yaml --input candidates.json
+python scripts/rhythm_scorer.py --profile profiles/default_xiaohongshu.yaml --input candidates.json
+python scripts/evaluate_candidates.py --profile profiles/default_xiaohongshu.yaml --input candidates.json
 ```
 
-### 3. Run the rhythm scorer
+### Customize a Profile
 
-```bash
-python scripts/rhythm_scorer.py \
-  --profile profiles/default_xiaohongshu.yaml \
-  --input candidates.json
-```
-
-### 4. Merge and rank
-
-```bash
-python scripts/evaluate_candidates.py \
-  --profile profiles/default_xiaohongshu.yaml \
-  --input candidates.json
-```
-
-## How to Adapt It
-
-### Replace the profile
-
-Start by copying a profile file and editing:
+Copy one of the profiles under `profiles/` and edit:
 
 - `platform_rules`
 - `audience_model`
@@ -126,18 +95,9 @@ Start by copying a profile file and editing:
 
 The schema is documented in `references/profile_schema.md`.
 
-### Replace the taste layer
+### Add Your Own Scorer
 
-If your team has its own title samples, add them into:
-
-- `golden_examples`
-- `negative_examples`
-
-That is the fastest way to align local style without touching the orchestration.
-
-### Add a custom scorer
-
-Any scorer adapter should return:
+Any custom scorer should return:
 
 - `title`
 - `score_name`
@@ -145,52 +105,51 @@ Any scorer adapter should return:
 - `pass_fail`
 - `reason`
 
-Scores should stay on a `0-100` scale.
+Scores should stay on a `0-100` scale so they can be merged with the bundled evaluators.
+
+## Included Profiles
+
+### Xiaohongshu
+
+- `profiles/default_xiaohongshu.yaml`
+- Prioritizes emotional pull, platform-native phrasing, and anti-summary behavior
+
+### Bilibili
+
+- `profiles/example_bilibili.yaml`
+- Leans toward discussion-driven, judgment-heavy, slightly denser headline styles
+
+## Architecture
+
+This skill follows progressive disclosure. The main `SKILL.md` stays short and procedural, while supporting files are only read when needed:
+
+| File | Purpose | Loaded When |
+| --- | --- | --- |
+| `SKILL.md` | Core workflow and invocation rules | Always |
+| `references/framework.md` | Universal headline method | During strategy and generation |
+| `references/profile_schema.md` | Profile contract | When adapting a profile |
+| `references/review_rubric.md` | Soft review criteria | During selection |
+| `scripts/hard_filter.py` | Deterministic filtering | Evaluation |
+| `scripts/rhythm_scorer.py` | Numeric rhythm scoring | Evaluation |
+| `scripts/evaluate_candidates.py` | Merge and ranking | Evaluation |
+| `tests/golden_set.jsonl` | Regression set | Testing |
+
+## Philosophy
+
+This project is built on a few strong opinions:
+
+1. Good headlines do not explain too early. They create pull first.
+2. Taste should be configurable. Workflow should be reusable.
+3. Rules belong in scripts when possible. They should not all live inside prompts.
+4. If a system cannot be regression-tested, it will drift back toward bland output.
 
 ## Validation
 
-Local validation:
+Run the bundled validator and tests:
 
 ```bash
 python scripts/validate_skill.py .
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-## GitHub Actions
-
-This repository ships with `.github/workflows/headline-skill-ci.yml`.
-
-The workflow runs on pushes, pull requests, and manual dispatch for this repository. It checks:
-
-- skill package structure
-- profile schema basics
-- `agents/openai.yaml`
-- Python tests
-
-## Output Contract
-
-The expected final selection structure is:
-
-- `winner`
-- `alternatives`
-- `rejected`
-- per title `hook_family`
-- per title `concealment_pattern`
-- per title `hard_filter_result`
-- per title `soft_scores`
-- per title `selection_reason`
-- per title `risk_notes`
-
-## Why This Is Open-Source Friendly
-
-The workflow is fixed. The taste is configurable. The checks are scriptable.
-
-That lets other teams bring their own:
-
-- audience
-- platform
-- banned words
-- examples
-- scoring logic
-
-without forking the whole generation process.
+The repository also ships with `.github/workflows/headline-skill-ci.yml` so the same checks run in GitHub Actions.
