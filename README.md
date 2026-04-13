@@ -1,5 +1,7 @@
 # Headline Skill
 
+[中文版说明](./README.zh-CN.md)
+
 Reusable title workflow for Codex. It turns headline generation into a portable system instead of a one-off prompt.
 
 ## What It Solves
