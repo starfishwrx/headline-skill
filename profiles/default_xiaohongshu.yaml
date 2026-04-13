@@ -1,0 +1,91 @@
+profile_name: default_xiaohongshu
+platform_rules:
+  language: zh-CN
+  hard_length: [10, 28]
+  preferred_length: [14, 22]
+  route_count: [4, 6]
+  preferred_punctuation: ["，", "？", "："]
+  forbidden_punctuation: ["!!!", "……", "...", "?!"]
+  summary_feel_patterns: ["教你", "分享", "总结", "干货", "方法论", "攻略", "保姆级"]
+  overpromise_patterns: ["一夜", "立刻", "百分百", "闭眼抄", "无脑", "躺赚"]
+  duplicate_similarity_threshold: 0.82
+audience_model:
+  identity: "想做内容增长和商业转化的中文互联网创作者"
+  current_state: "见过很多空标题，对公式感和销售腔敏感"
+  desired_state: "想要被看见，也想保持审美和可信度"
+  sensitivity: "高"
+  emotional_triggers: ["被看见", "反常识", "低调有效", "代价", "判断力"]
+tone_rules:
+  voice: "直接、克制、有判断"
+  emotional_temperature: "中高"
+  preferred_register: ["口语化", "有场景", "带情绪钩子"]
+  avoid_register: ["课程销售页", "公众号总结", "鸡汤", "命令式教学"]
+  summary_avoidance: "高"
+  credibility_floor: "中高"
+hook_families:
+  - name: curiosity-gap
+    description: "提出缺口，不先给答案"
+    preferred_use: "需要点开欲"
+    avoid_when: "信息已经非常窄"
+    prompt_hint: "让读者感觉差一口气就要知道，但别变空"
+  - name: identity-mirror
+    description: "让目标人群立刻对号入座"
+    preferred_use: "受众边界清晰"
+    avoid_when: "泛人群选题"
+    prompt_hint: "像是在说某种人，而不是说一类内容"
+  - name: tension-and-cost
+    description: "暴露代价、反差、压力"
+    preferred_use: "适合商业、增长、内容判断"
+    avoid_when: "题材过轻"
+    prompt_hint: "先露出摩擦，再暗示收益"
+  - name: specific-scene
+    description: "给具体时刻，不给大结论"
+    preferred_use: "素材里有真实场景"
+    avoid_when: "全是抽象观点"
+    prompt_hint: "用一个瞬间把读者拖进去"
+  - name: emotion-first
+    description: "先给感受，再给信息"
+    preferred_use: "内容涉及焦虑、释然、被理解"
+    avoid_when: "需要很强理性权威"
+    prompt_hint: "先让心里动一下，再让脑子补全"
+bad_patterns:
+  - "像视频摘要"
+  - "像课程大纲"
+  - "像销售页承诺"
+  - "只是在复述主题"
+  - "同义改写堆满候选池"
+banned_words: ["干货", "保姆级", "万能", "无脑", "躺赚"]
+score_weights:
+  emotional_tension: 0.22
+  concealment: 0.20
+  specificity: 0.14
+  platform_fit: 0.14
+  credibility: 0.10
+  curiosity_gap: 0.10
+  rhythm: 0.10
+golden_examples:
+  - title: "真正有用的表达，常常第一眼不讨好"
+    why_it_works: "先放判断情绪，再藏住方法论"
+    hook_family: tension-and-cost
+    concealment_pattern: hide-conclusion-show-tension
+  - title: "能把内容做起来的人，通常都不太爱解释自己"
+    why_it_works: "用身份感和反常识抓人，不先讲中心思想"
+    hook_family: identity-mirror
+    concealment_pattern: hide-claim-show-observation
+  - title: "我后来才发现，最能打的标题都不急着讲重点"
+    why_it_works: "把观点藏进后半句，用认知转折启动好奇"
+    hook_family: curiosity-gap
+    concealment_pattern: hide-conclusion-show-tension
+negative_examples:
+  - title: "教你写出高点击率标题的5个方法"
+    why_it_fails: "总结感和教学感太强，中心思想完全外露"
+    hook_family: practical-trigger
+    concealment_pattern: none
+  - title: "小红书爆款标题写作干货分享"
+    why_it_fails: "抽象、陈词滥调、平台噪音词过多"
+    hook_family: none
+    concealment_pattern: none
+  - title: "学会这个技巧你就能轻松起爆款标题"
+    why_it_fails: "承诺过满，销售页气味明显"
+    hook_family: overpromise
+    concealment_pattern: none
