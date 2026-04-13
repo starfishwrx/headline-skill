@@ -1,0 +1,90 @@
+profile_name: example_bilibili
+platform_rules:
+  language: zh-CN
+  hard_length: [12, 34]
+  preferred_length: [18, 28]
+  route_count: [4, 6]
+  preferred_punctuation: ["？", "："]
+  forbidden_punctuation: ["!!!", "……", "..."]
+  summary_feel_patterns: ["带你", "教你", "速成", "总结", "全攻略"]
+  overpromise_patterns: ["立刻", "闭眼", "无脑", "稳了", "绝对"]
+  duplicate_similarity_threshold: 0.8
+audience_model:
+  identity: "愿意花时间看观点、拆解和案例的中文视频观众"
+  current_state: "对情绪钩子有耐心，但讨厌空心标题"
+  desired_state: "想获得更强判断和更具体的认知收益"
+  sensitivity: "中高"
+  emotional_triggers: ["认知升级", "反直觉", "案例拆解", "被说破", "站队感"]
+tone_rules:
+  voice: "有观点、有信息密度、少废话"
+  emotional_temperature: "中"
+  preferred_register: ["观点型", "讨论感", "带判断"]
+  avoid_register: ["鸡血口号", "纯情绪喊话", "销售文案"]
+  summary_avoidance: "中高"
+  credibility_floor: "高"
+hook_families:
+  - name: unexpected-reversal
+    description: "用反常识观点开门"
+    preferred_use: "观点拆解和行业观察"
+    avoid_when: "论据太弱"
+    prompt_hint: "让标题先完成一次认知翻面"
+  - name: identity-mirror
+    description: "让某类观众被点名"
+    preferred_use: "受众清晰"
+    avoid_when: "太泛"
+    prompt_hint: "像在识别一类人，而不是推销一个结论"
+  - name: specific-scene
+    description: "用一个案例或瞬间代替抽象命题"
+    preferred_use: "有故事或观察"
+    avoid_when: "只有理论"
+    prompt_hint: "让场景承担一半信息"
+  - name: status-signal
+    description: "用判断力、品味或经验建立拉力"
+    preferred_use: "行业判断、内容分析"
+    avoid_when: "题材过轻"
+    prompt_hint: "像一个有经验的人轻轻丢出判断"
+  - name: practical-trigger
+    description: "指出真实问题和适用情境"
+    preferred_use: "工具、方法、策略类视频"
+    avoid_when: "像教程目录"
+    prompt_hint: "让应用场景出现，不要写成步骤标题"
+bad_patterns:
+  - "像视频目录"
+  - "像知识点总结"
+  - "信息密度假高，实际没有判断"
+  - "只是把主题换个说法"
+banned_words: ["无脑", "速成", "绝对", "躺赢"]
+score_weights:
+  emotional_tension: 0.10
+  concealment: 0.16
+  specificity: 0.16
+  platform_fit: 0.18
+  credibility: 0.16
+  curiosity_gap: 0.12
+  rhythm: 0.12
+golden_examples:
+  - title: "很多人以为自己在做内容，其实只是在重复平台奖励"
+    why_it_works: "观点和判断先行，但仍留出展开空间"
+    hook_family: unexpected-reversal
+    concealment_pattern: hide-claim-show-observation
+  - title: "真正会做选题的人，通常不会先问写什么"
+    why_it_works: "身份感加反常识，适合讨论型视频"
+    hook_family: identity-mirror
+    concealment_pattern: hide-lesson-show-mistake
+  - title: "我看了几十个爆款视频后，最意外的不是标题"
+    why_it_works: "案例入口加认知转折，能带出长视频讨论"
+    hook_family: specific-scene
+    concealment_pattern: hide-conclusion-show-tension
+negative_examples:
+  - title: "B站标题怎么写，这条视频一次讲清"
+    why_it_fails: "目录感太强，像课程标题"
+    hook_family: practical-trigger
+    concealment_pattern: none
+  - title: "看完你就懂B站爆款标题底层逻辑"
+    why_it_fails: "承诺空泛，平台味不够"
+    hook_family: overpromise
+    concealment_pattern: none
+  - title: "标题技巧全总结"
+    why_it_fails: "过于抽象，没有钩子"
+    hook_family: none
+    concealment_pattern: none
