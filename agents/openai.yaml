@@ -1,0 +1,4 @@
+interface:
+  display_name: "Headline Skill"
+  short_description: "Reusable headline workflow with profiles"
+  default_prompt: "Use $headline-skill to generate, review, and rank titles from my brief."
