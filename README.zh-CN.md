@@ -2,61 +2,50 @@
 
 [English README](./README.md)
 
-`headline_skill` 是一个可复用、可配置、可开源的标题生成与评审工作流。
+`headline_skill` 是一套可复用的标题工作流。它不是帮你临时起几个标题的 prompt，而是把起标题这件事拆成固定流程、可替换配置和可插拔评分器，方便你自己用，也方便别人按自己的场景接入。
 
-它解决的不是一次性起标题，而是把起标题这件事做成一套可迁移的生产协议。你可以把自己的平台规则、受众画像、禁词、样本和评分器接进来，而不用重写整条流程。
+## 这个项目想解决什么
 
-## 这个项目在做什么
+很多 AI 写出来的标题不差，但也不想点。问题通常不在语法，而在表达方式太老实。它太快把中心思想说完了，于是标题变成了摘要、总结，或者教程目录。
 
-大多数 AI 标题之所以平，是因为它们太早开始总结。真正有拉力的标题，往往会先藏住中心思想，先放出情绪钩子、冲突、代价、反差或者场景。
+这个项目的出发点很简单：好标题往往不是先把重点讲清，而是先把情绪钩子、冲突、代价、反差或者场景放出来。真正的中心思想，可以藏一点，留给读者在点开后自己补全。
 
-这个仓库把这个过程拆成三层：
+## 它是怎么组织的
 
-1. 通用流程层
-   - 读取 brief
-   - 提取卖点、冲突、身份、情绪目标、隐藏中心思想
-   - 选择 4 到 6 条不同的 hook route
-   - 生成候选标题
-   - 做硬规则过滤
-   - 做软评分和选优
-2. 配置层
-   - 平台规则
-   - 用户画像
-   - 风格约束
-   - 禁词和坏模式
-   - 好标题样本和坏标题样本
-   - 评分权重
-3. 评分器层
-   - 内置硬过滤器
-   - 内置节奏评分器
-   - 支持按统一 contract 接入自定义 scorer
+整个仓库分三层。
 
-## 为什么它不是一个 prompt
+第一层是固定流程。负责读 brief、拆内容、挑路线、出候选、做过滤、做评审、给出首选和备选。这一层尽量不跟着个人偏好乱改。
 
-如果把一整份 guideline 全塞进 prompt，模型通常会出现三个问题：
+第二层是 profile。这里放平台规则、受众画像、语气约束、禁词、好坏样本和评分权重。换句话说，真正和你业务绑定的东西，都放在这一层。
 
-- 输出越来越像总结句
-- 约束越多，结果越像折中产物
-- 一旦换平台、换受众、换业务，就得重写整套提示词
+第三层是 scorer。仓库里已经带了硬过滤和节奏评分。你如果有自己的脚本，也可以按统一返回格式接进来，不用重写整条流程。
 
-这个项目的设计是反着来的：
+## 为什么它不是一个大 prompt
 
-- 方法放在 workflow
-- 审美放在 profile
-- 规则放在脚本
+很多标题系统喜欢把一长串要求直接塞进 prompt。这样短期看方便，长期几乎一定会出三个问题。
 
-这样别人接入时，主要改的是 profile 和样本，不是底层流程。
+- 约束一多，模型就开始求稳，越写越像总结
+- 换个平台、换业务、换受众，就得重新改 prompt
+- 团队里的经验很难沉淀，最后只能靠人记住
 
-## 仓库里已经包含什么
+这个项目反过来处理：
+
+- 方法写进流程
+- 审美写进 profile
+- 规则写进脚本
+
+这样别人在接入时，主要改的是自己的风格和场景，不是把底层逻辑重做一遍。
+
+## 仓库里已经有什么
 
 - `SKILL.md`
-  - Codex Skill 主入口，定义触发场景和标准流程
+  - Codex Skill 主入口，定义什么时候触发、按什么流程工作
 - `profiles/`
-  - 两个示例 profile
+  - 现在带了两个示例
   - `default_xiaohongshu.yaml`
   - `example_bilibili.yaml`
 - `references/`
-  - 通用方法、profile schema、review rubric
+  - 放通用方法、profile schema 和 review rubric
 - `scripts/`
   - `hard_filter.py`
   - `rhythm_scorer.py`
@@ -64,40 +53,40 @@
   - `validate_skill.py`
 - `tests/`
   - 33 条 golden set
-  - 单元测试
+  - 一组单元测试
 - `.github/workflows/headline-skill-ci.yml`
   - GitHub Actions 自动校验
 
-## 最适合谁用
+## 适合什么人
 
-这个仓库适合：
+如果你符合下面任一类，这个仓库基本就有用：
 
-- 做小红书、B 站、公众号、视频号、课程内容标题的人
-- 想把团队里的标题经验沉淀成配置的人
-- 想开源一套标题方法，但又不想把个人审美写死的人
-- 想让别人只改 profile 就能接入自己业务的人
+- 你在做小红书、B 站、公众号、视频号、课程页之类的内容标题
+- 你想把团队里的标题经验沉淀下来，而不是散落在聊天记录和 prompt 里
+- 你想开源一套标题方法，但不想把自己的审美写死
+- 你想让别人只换 profile 就能用上同一套流程
 
-## 快速开始
+## 怎么开始用
 
-### 1. 安装依赖
+先装依赖：
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-### 2. 校验项目结构
+然后先检查仓库结构有没有问题：
 
 ```bash
 python scripts/validate_skill.py .
 ```
 
-### 3. 跑测试
+再跑测试，确认本地环境没问题：
 
 ```bash
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-### 4. 运行标题评估链路
+如果你已经有一批候选标题，可以直接走评估链路：
 
 ```bash
 python scripts/hard_filter.py --profile profiles/default_xiaohongshu.yaml --input candidates.json
@@ -105,21 +94,21 @@ python scripts/rhythm_scorer.py --profile profiles/default_xiaohongshu.yaml --in
 python scripts/evaluate_candidates.py --profile profiles/default_xiaohongshu.yaml --input candidates.json
 ```
 
-## 如何接入你自己的版本
+## 如果你要接自己的版本
 
-最推荐的方式是：
+最省事的接入方式是：
 
 1. 复制一个 profile
-2. 改成自己的平台规则和用户画像
+2. 改成自己的平台规则和受众画像
 3. 填自己的好标题样本和坏标题样本
-4. 如果你有额外脚本，按 scorer contract 接入
-5. 保留 workflow、测试和 CI
+4. 如果你有额外脚本，就按 scorer contract 接进来
+5. 保留现有 workflow、测试和 CI
 
-这样你改的是风格和业务，而不是底层能力。
+这样你改的是业务层，不是底层流程。
 
-## 输出长什么样
+## 输出结果长什么样
 
-这个项目的输出不是一个标题，而是一组结构化结果：
+这个项目默认输出的不是一句标题，而是一组结构化结果，方便后续继续做 A/B 测试和人工终审。
 
 - `winner`
 - `alternatives`
@@ -131,14 +120,6 @@ python scripts/evaluate_candidates.py --profile profiles/default_xiaohongshu.yam
 - `selection_reason`
 - `risk_notes`
 
-这样后面才方便做：
+## 一句话说完
 
-- A/B 测试
-- 人工终审
-- scorer 升级
-- 多平台扩展
-- 复盘与回归测试
-
-## 一句话总结
-
-`headline_skill` 不是一个起标题 prompt，而是一套可迁移的标题生产协议。
+`headline_skill` 不是一个起标题 prompt，而是一套能迁移、能复用、能让别人接入自己风格的标题工作流。
