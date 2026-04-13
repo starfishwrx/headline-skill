@@ -20,7 +20,11 @@ REQUIRED_SKILL_FILES = [
     "references/profile_schema.md",
     "references/review_rubric.md",
     "profiles/default_xiaohongshu.yaml",
+    "profiles/default_xiaohongshu.editorial_playbook.md",
+    "profiles/default_xiaohongshu.benchmark_titles.txt",
     "profiles/example_bilibili.yaml",
+    "profiles/example_bilibili.editorial_playbook.md",
+    "profiles/example_bilibili.benchmark_titles.txt",
     "scripts/hard_filter.py",
     "scripts/rhythm_scorer.py",
     "scripts/evaluate_candidates.py",
@@ -37,8 +41,11 @@ REQUIRED_PROFILE_KEYS = {
     "bad_patterns",
     "banned_words",
     "score_weights",
+    "review_tests",
     "golden_examples",
     "negative_examples",
+    "editorial_playbook",
+    "benchmark_titles",
 }
 
 REQUIRED_AGENT_FIELDS = {
@@ -103,6 +110,20 @@ def validate_profile(path: Path) -> list[str]:
     weights = data.get("score_weights", {})
     if not isinstance(weights, dict) or "rhythm" not in weights:
         errors.append(f"{path.name} score_weights must include rhythm")
+
+    review_tests = data.get("review_tests", [])
+    if not isinstance(review_tests, list) or len(review_tests) < 2:
+        errors.append(f"{path.name} must define at least 2 review_tests")
+    else:
+        names = {item.get("name") for item in review_tests if isinstance(item, dict)}
+        for required_name in {"honesty", "shareability"}:
+            if required_name not in names:
+                errors.append(f"{path.name} review_tests must include {required_name}")
+
+    for key in ("editorial_playbook", "benchmark_titles"):
+        target = data.get(key)
+        if not isinstance(target, str) or not target.strip():
+            errors.append(f"{path.name} must define {key}")
     return errors
 
 
@@ -111,6 +132,27 @@ def validate_golden_set(path: Path) -> list[str]:
     lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
     if len(lines) < 30:
         errors.append("tests/golden_set.jsonl must contain at least 30 rows")
+    return errors
+
+
+def validate_profile_assets(skill_dir: Path, profile_path: Path) -> list[str]:
+    errors: list[str] = []
+    data = read_yaml(profile_path)
+
+    playbook = skill_dir / str(data.get("editorial_playbook", ""))
+    if not playbook.exists():
+        errors.append(f"{profile_path.name} editorial_playbook target is missing")
+    elif len(playbook.read_text(encoding="utf-8").strip()) < 80:
+        errors.append(f"{profile_path.name} editorial_playbook looks too short")
+
+    benchmark = skill_dir / str(data.get("benchmark_titles", ""))
+    if not benchmark.exists():
+        errors.append(f"{profile_path.name} benchmark_titles target is missing")
+    else:
+        lines = [line for line in benchmark.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if len(lines) < 5:
+            errors.append(f"{profile_path.name} benchmark_titles should contain at least 5 titles")
+
     return errors
 
 
@@ -126,8 +168,12 @@ def validate_skill_dir(skill_dir: Path) -> list[str]:
 
     errors.extend(validate_frontmatter(skill_dir / "SKILL.md"))
     errors.extend(validate_agents_yaml(skill_dir / "agents" / "openai.yaml"))
-    errors.extend(validate_profile(skill_dir / "profiles" / "default_xiaohongshu.yaml"))
-    errors.extend(validate_profile(skill_dir / "profiles" / "example_bilibili.yaml"))
+    xhs_profile = skill_dir / "profiles" / "default_xiaohongshu.yaml"
+    bili_profile = skill_dir / "profiles" / "example_bilibili.yaml"
+    errors.extend(validate_profile(xhs_profile))
+    errors.extend(validate_profile(bili_profile))
+    errors.extend(validate_profile_assets(skill_dir, xhs_profile))
+    errors.extend(validate_profile_assets(skill_dir, bili_profile))
     errors.extend(validate_golden_set(skill_dir / "tests" / "golden_set.jsonl"))
     return errors
 

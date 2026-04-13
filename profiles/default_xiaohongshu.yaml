@@ -1,4 +1,6 @@
 profile_name: default_xiaohongshu
+editorial_playbook: profiles/default_xiaohongshu.editorial_playbook.md
+benchmark_titles: profiles/default_xiaohongshu.benchmark_titles.txt
 platform_rules:
   language: zh-CN
   hard_length: [10, 28]
@@ -63,6 +65,13 @@ score_weights:
   credibility: 0.10
   curiosity_gap: 0.10
   rhythm: 0.10
+review_tests:
+  - name: honesty
+    question: "用户点进去看完后，会不会觉得标题承诺的东西内容里确实有？"
+    fail_if: "标题抢先把结论说完，或真实内容不足以支撑标题的 tension 和判断。"
+  - name: shareability
+    question: "一个对 AI 味和销售腔敏感的创作者，会不会愿意把这条内容转给朋友？"
+    fail_if: "标题让转发者显得像在卖课、喊口号，或者显得判断力不够。"
 golden_examples:
   - title: "真正有用的表达，常常第一眼不讨好"
     why_it_works: "先放判断情绪，再藏住方法论"

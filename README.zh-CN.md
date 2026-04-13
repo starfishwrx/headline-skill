@@ -13,9 +13,11 @@
 ### 核心特性
 
 - 可替换的 Profile
-  - 平台规则、用户画像、语气限制、禁词、样本和评分权重都放在 profile。
+  - 平台规则、用户画像、语气限制、禁词、review tests、样本和评分权重都放在 profile。
+- 成套的 Profile 资产
+  - 一个 profile 不只是一份 YAML，还可以带 editorial playbook 和 benchmark title 集。
 - 结构化评审
-  - 候选标题不是随便丢一串出来，而是经过过滤、评分和排序。
+  - 候选标题不是随便丢一串出来，而是经过过滤、评分、基准对照和排序。
 - 可插拔的 Scorer
   - 仓库内置节奏评分，也支持接自己的脚本。
 - 流程可迁移
@@ -47,10 +49,37 @@ python -m pip install -r requirements.txt
 
 ### 评估一批候选标题
 
-先准备一个 `candidates.json`：
+先准备一个带 brief 的 `candidates.json`：
 
 ```json
 {
+  "brief": {
+    "platform": "xiaohongshu",
+    "audience": "内容创业者",
+    "content_summary": "为什么好的标题不能一上来讲中心思想",
+    "core_points": [
+      "好标题先放情绪钩子",
+      "总结腔会削弱点击"
+    ],
+    "desired_emotion": "被说破",
+    "hidden_thesis": "标题应该隐藏中心思想",
+    "forbidden_angles": [
+      "教学目录感"
+    ],
+    "length_range": [
+      14,
+      22
+    ],
+    "risk_level": "medium",
+    "extra_context": "偏方法论",
+    "anchor_artifacts": [
+      {
+        "type": "opening_hook",
+        "content": "上来先讲结论的视频，往往最容易被划走",
+        "notes": "标题不要重复这句话本身，要往更大的判断上提"
+      }
+    ]
+  },
   "candidates": [
     {
       "title": "真正能打的标题，第一眼往往不讲重点",
@@ -90,8 +119,11 @@ python scripts/evaluate_candidates.py --profile profiles/default_xiaohongshu.yam
 - `bad_patterns`
 - `banned_words`
 - `score_weights`
+- `review_tests`
 - `golden_examples`
 - `negative_examples`
+- `editorial_playbook`
+- `benchmark_titles`
 
 具体字段约定在 `references/profile_schema.md`。
 
@@ -126,6 +158,8 @@ python scripts/evaluate_candidates.py --profile profiles/default_xiaohongshu.yam
 | 文件 | 作用 | 什么时候读 |
 | --- | --- | --- |
 | `SKILL.md` | 主流程和调用规则 | 每次调用都读 |
+| `profiles/*.editorial_playbook.md` | profile 的长文本认知层 | 生成前 |
+| `profiles/*.benchmark_titles.txt` | 外部标题基准 | 评审时 |
 | `references/framework.md` | 通用标题方法 | 做策略和生成时 |
 | `references/profile_schema.md` | profile 约定 | 改配置时 |
 | `references/review_rubric.md` | 软评审标准 | 做筛选时 |

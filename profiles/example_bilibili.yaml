@@ -1,4 +1,6 @@
 profile_name: example_bilibili
+editorial_playbook: profiles/example_bilibili.editorial_playbook.md
+benchmark_titles: profiles/example_bilibili.benchmark_titles.txt
 platform_rules:
   language: zh-CN
   hard_length: [12, 34]
@@ -62,6 +64,13 @@ score_weights:
   credibility: 0.16
   curiosity_gap: 0.12
   rhythm: 0.12
+review_tests:
+  - name: honesty
+    question: "观众看完视频后，会不会觉得标题里的判断在内容里站得住？"
+    fail_if: "标题把论断抬得太高，但内容里没有足够案例、观点推进或证据承接。"
+  - name: shareability
+    question: "一个愿意花时间看长视频的人，会不会愿意把这期转给同样挑内容的朋友？"
+    fail_if: "标题像教程目录、情绪喊话或低信息密度营销文案。"
 golden_examples:
   - title: "很多人以为自己在做内容，其实只是在重复平台奖励"
     why_it_works: "观点和判断先行，但仍留出展开空间"

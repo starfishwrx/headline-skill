@@ -52,8 +52,29 @@ class HeadlineSkillTests(unittest.TestCase):
             "length_range",
             "risk_level",
             "extra_context",
+            "anchor_artifacts",
         }
         self.assertTrue(required.issubset(sample["brief"].keys()))
+        self.assertIsInstance(sample["brief"]["anchor_artifacts"], list)
+
+    def test_profile_bundle_assets_exist(self) -> None:
+        for profile in (self.xhs_profile, self.bili_profile):
+            with self.subTest(profile=profile["profile_name"]):
+                playbook = ROOT / profile["editorial_playbook"]
+                benchmark = ROOT / profile["benchmark_titles"]
+                self.assertTrue(playbook.exists())
+                self.assertTrue(benchmark.exists())
+                self.assertGreater(len(playbook.read_text(encoding="utf-8").strip()), 80)
+                titles = [line for line in benchmark.read_text(encoding="utf-8").splitlines() if line.strip()]
+                self.assertGreaterEqual(len(titles), 5)
+
+    def test_profiles_define_honesty_and_shareability_review_tests(self) -> None:
+        for profile in (self.xhs_profile, self.bili_profile):
+            with self.subTest(profile=profile["profile_name"]):
+                tests = profile["review_tests"]
+                names = {item["name"] for item in tests}
+                self.assertIn("honesty", names)
+                self.assertIn("shareability", names)
 
     def test_hard_filter_catches_banned_words_and_duplicates(self) -> None:
         candidates = [

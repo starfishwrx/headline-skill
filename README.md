@@ -13,9 +13,11 @@ The core idea is simple: good headlines usually reveal tension before they revea
 ### Key Features
 
 - Configurable Profiles
-  - Platform rules, audience model, tone constraints, banned words, and example packs all live in profiles.
+  - Platform rules, audience model, tone constraints, banned words, review tests, and example packs all live in profiles.
+- Profile Bundles
+  - Each bundled profile can ship an editorial playbook and benchmark title set, not only a YAML file.
 - Structured Review
-  - Candidates are filtered, scored, and ranked instead of being dumped as a loose list.
+  - Candidates are filtered, scored, benchmarked, and ranked instead of being dumped as a loose list.
 - Pluggable Scorers
   - Rhythm scoring is bundled. Custom scorers can be added through the same contract.
 - Portable Workflow
@@ -47,10 +49,37 @@ python -m pip install -r requirements.txt
 
 ### Generate and Review Headlines
 
-Prepare a candidate JSON file:
+Prepare a brief plus candidate JSON file:
 
 ```json
 {
+  "brief": {
+    "platform": "xiaohongshu",
+    "audience": "内容创业者",
+    "content_summary": "为什么好的标题不能一上来讲中心思想",
+    "core_points": [
+      "好标题先放情绪钩子",
+      "总结腔会削弱点击"
+    ],
+    "desired_emotion": "被说破",
+    "hidden_thesis": "标题应该隐藏中心思想",
+    "forbidden_angles": [
+      "教学目录感"
+    ],
+    "length_range": [
+      14,
+      22
+    ],
+    "risk_level": "medium",
+    "extra_context": "偏方法论",
+    "anchor_artifacts": [
+      {
+        "type": "opening_hook",
+        "content": "上来先讲结论的视频，往往最容易被划走",
+        "notes": "标题不要重复这句话本身，要往更大的判断上提"
+      }
+    ]
+  },
   "candidates": [
     {
       "title": "真正能打的标题，第一眼往往不讲重点",
@@ -90,8 +119,11 @@ Copy one of the profiles under `profiles/` and edit:
 - `bad_patterns`
 - `banned_words`
 - `score_weights`
+- `review_tests`
 - `golden_examples`
 - `negative_examples`
+- `editorial_playbook`
+- `benchmark_titles`
 
 The schema is documented in `references/profile_schema.md`.
 
@@ -126,6 +158,8 @@ This skill follows progressive disclosure. The main `SKILL.md` stays short and p
 | File | Purpose | Loaded When |
 | --- | --- | --- |
 | `SKILL.md` | Core workflow and invocation rules | Always |
+| `profiles/*.editorial_playbook.md` | Profile-specific cognition layer | Before generation |
+| `profiles/*.benchmark_titles.txt` | External benchmark set | During review |
 | `references/framework.md` | Universal headline method | During strategy and generation |
 | `references/profile_schema.md` | Profile contract | When adapting a profile |
 | `references/review_rubric.md` | Soft review criteria | During selection |
